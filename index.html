@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ֆիլմ + սուրճ ամեն օր</title>
+<style>
+:root{--bg:#fbf6ef;--card:#fff;--tx:#2b1d14;--mu:#7a6454;--ac:#b4562a;--bd:#e8dccd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1210;--card:#271b17;--tx:#f5e9dc;--mu:#b9a290;--ac:#e8895a;--bd:#3d2c25}}
+:root[data-theme="dark"]{--bg:#1a1210;--card:#271b17;--tx:#f5e9dc;--mu:#b9a290;--ac:#e8895a;--bd:#3d2c25}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Georgia,"Noto Serif Armenian",serif;line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:20px;margin:28px 0 10px}
+.sub{color:var(--mu);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:12px}
+.date{color:var(--mu);font-size:14px}
+.film{font-size:26px;margin:6px 0;color:var(--ac)}
+.nav{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button,.chip{font:inherit;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:999px;padding:7px 14px;cursor:pointer}
+button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.rec h3{margin:0 0 4px;font-size:17px}.rec p{margin:4px 0;font-size:15px}
+.wc{position:relative;width:300px;max-width:100%;margin:12px auto}
+.wc canvas{width:100%;display:block;border-radius:50%;transition:transform 4.2s cubic-bezier(.17,.67,.12,1);border:4px solid var(--card);box-shadow:0 2px 12px #0003}
+.ptr{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid var(--tx);z-index:2}
+#wm{text-align:center;color:var(--mu);min-height:24px;margin:6px 0}
+.miss{color:var(--mu);font-size:13px}
+.m{font-size:14px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 6px}
+.row{display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--bd);font-size:15px}
+.row.today{background:var(--card);border-radius:8px;font-weight:bold}
+.row .d{width:52px;color:var(--mu);flex:none}.row .t{flex:1}
+.row.done .t{text-decoration:line-through;opacity:.5}
+</style>
+</head>
+<body>
+<main>
+<h1>🎬 Ֆիլմ + ☕ սուրճ</h1>
+<p class="sub">Ամեն օրվա համար մեկ ֆիլմ՝ Հարի Փոթերից մինչև ամանորյա կախարդանք։</p>
+
+<div class="card" id="today"></div>
+<div class="card" style="text-align:center"><b>🎡 Ընտրիր ֆիլմը պտտելով</b>
+<div class="wc"><div class="ptr"></div><canvas id="wh" width="300" height="300"></canvas></div>
+<button class="pri" id="sp">Պտտել</button><p id="wm">Կընտրվի դեռ չդիտված ֆիլմերից՝ ընտրված օրվա համար</p></div>
+
+<h2>☕ Ի՞նչ ունես տանը</h2>
+<div class="chips" id="ings"></div>
+<div id="recs"></div>
+
+<h2>📅 Ամբողջ օրացույցը</h2>
+<div id="cal"></div>
+</main>
+<script>
+const START=new Date(2026,9,3);
+const RAW=`Հարրի Փոթերը և գաղտնիքների սենյակը (2002)|Հարրի Փոթերը և Ազկաբանի բանտարկյալը (2004)|Հարրի Փոթերը և կրակի բաժակը (2005)|Հարրի Փոթերը և Փյունիկի օրդենը (2007)|Հարրի Փոթերը և Կիսարյուն իշխանը (2009)|Հարրի Փոթերը և մահվան պարգևները, 1-ին մաս (2010)|Հարրի Փոթերը և մահվան պարգևները, 2-րդ մաս (2011)|Ֆանտաստիկ գազաններ և որտեղ գտնել դրանք (2016)|Կորալայն (2009)|Հոկուս Պոկուս (1993)|Մեռյալ հարսնացուն (2005)|Մղձավանջ Սուրբ Ծննդից առաջ (1993)|Գործնական կախարդություն (1998)|Քնած խոռոչը (1999)|Մկրատ-ձեռքերով Էդվարդը (1990)|Բիթլջյուս (1988)|Աստղափոշի (2007)|Քեսփեր (1995)|Ադամսների ընտանիքը (1991)|Ադամսների ընտանիքի արժեքները (1993)|Ֆրանկենվինի (2012)|Հյուրանոց Տրանսիլվանիա (2012)|Մատիլդա (1996)|Չարլին և շոկոլադի գործարանը (2005)|Ալիսը հրաշքների աշխարհում (2010)|Մեծ ձուկը (2003)|Հաուլի շարժվող դղյակը (2004)|Ոգիների առևանգումը (2001)|Հելոուինթաուն (1998)|Հրաշալի պարոն Աղվեսը (2009)|Փոքրիկ կանայք (2019)|Հպարտություն և նախապաշարմունք (2005)|Ամելի (2001)|Բուդապեշտ հյուրանոցը (2014)|Շոկոլադ (2000)|Փեդինգթոն (2014)|Փեդինգթոն 2 (2017)|Կախարդված (2007)|Ռատատուի (2007)|Ջուլի և Ջուլիա (2009)|Կիկիի առաքման ծառայությունը (1989)|Մերի Փոփինս (1964)|Մերի Փոփինսը վերադառնում է (2018)|Գաղտնի այգին (1993)|Դայակ Մակֆին (2005)|Կամուրջ դեպի Տերաբիտիա (2007)|Արքայադուստր հարսնացուն (1987)|Կոկո (2017)|Էնկանտո (2021)|Խճճված (2010)|Սառցե սիրտ (2013)|Սառցե սիրտ 2 (2019)|Խիզախ (2012)|Մոանա (2016)|Մոխրոտիկ (2015)|Գեղեցկուհին և հրեշը (2017)|Բևեռային էքսպրես (2004)|Կլաուս (2019)|Արթուրի Սուրբ Ծնունդը (2011)|Մենակ տանը (1990)|Մենակ տանը 2 (1992)|Ինչպես Գրինչը գողացավ Սուրբ Ծնունդը (2000)|Էլֆ (2003)|Արձակուրդ (2006)|⭐ Չորեքշաբթի (Wednesday) — Սեզոն 1, սերիա 1–4 (2022)|⭐ Չորեքշաբթի (Wednesday) — Սեզոն 1, սերիա 5–8 (2022)|Իրականում սեր (2003)|Սուրբ Ծննդյան երգ (2009)|Մապետների Սուրբ Ծննդյան երգը (1992)|Հրաշք 34-րդ փողոցում (1994)|Հրաշալի է կյանքը (1946)|Սպիտակ Սուրբ Ծնունդ (1954)|Սկրուջդ (1988)|Սանտա Կլաուսը (1994)|Ջինգլ օլ դը վեյ (1996)|Սուրբ Ծնունդ Կրենքսների հետ (2004)|Չորս Սուրբ Ծնունդ (2008)|Անցյալ Սուրբ Ծնունդ (2019)|Սթոունների ընտանիքը (2005)|Պահապանների վերելքը (2012)|Ոգեշնչված (2022)|Սուրբ Ծննդյան տարեգրություն (2018)|Սուրբ Ծննդյան տարեգրություն 2 (2020)|🎄 Հարրի Փոթերը և փիլիսոփայական քարը (2001)|Ֆրեդ Կլաուս (2007)|Ջումանջի (1995)|Միսիս Դաութֆայր (1993)|Ետ դեպի ապագա (1985)|Բրիջիտ Ջոնսի օրագիրը (2001)|🎆 Երբ Հարրին հանդիպեց Սալլիին (1989)`;
+const FILMS=RAW.split("|");
+const MN=["հունվարի","փետրվարի","մարտի","ապրիլի","մայիսի","հունիսի","հուլիսի","օգոստոսի","սեպտեմբերի","հոկտեմբերի","նոյեմբերի","դեկտեմբերի"];
+const dateOf=i=>{const d=new Date(START);d.setDate(d.getDate()+i);return d};
+const fmt=d=>d.getDate()+" "+MN[d.getMonth()];
+const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+let cur=Math.round((day0(new Date())-START)/864e5);
+let todayIdx=cur;
+if(cur<0)cur=0;if(cur>=FILMS.length)cur=FILMS.length-1;
+let swaps=[];try{swaps=JSON.parse(localStorage.getItem("s2")||"[]")}catch(e){}
+swaps.forEach(([a,b])=>{[FILMS[a],FILMS[b]]=[FILMS[b],FILMS[a]]});
+let watched={};
+try{watched=JSON.parse(localStorage.getItem("w")||"{}")}catch(e){}
+const fu=()=>{let i=0;while(i<FILMS.length&&watched[i])i++;return i};
+const locked=i=>i>fu()||i>todayIdx;
+cur=Math.max(0,Math.min(fu(),todayIdx,FILMS.length-1));
+const save=()=>{try{localStorage.setItem("w",JSON.stringify(watched))}catch(e){}};
+
+function renderToday(){
+  const t=document.getElementById("today");
+  t.innerHTML=`<div class="date">${cur===todayIdx?"Այսօր՝ ":""}${fmt(dateOf(cur))}</div>
+  <div class="film">${FILMS[cur]}</div>
+  <div class="nav"><button id="p">← Նախորդը</button><button id="n"${cur>=FILMS.length-1||locked(cur+1)?" disabled style=\"opacity:.4\"":""}>${cur<FILMS.length-1&&locked(cur+1)?"🔒 Հաջորդը":"Հաջորդը →"}</button>
+  <button class="pri" id="w">${watched[cur]?"✓ Դիտեցի":"Նշել՝ դիտեցի"}</button></div>`;
+  p.onclick=()=>{if(cur>0){cur--;all()}};
+  n.onclick=()=>{if(cur<FILMS.length-1&&!locked(cur+1)){cur++;all()}};
+  w.onclick=()=>{watched[cur]=!watched[cur];save();all()};
+}
+function renderCal(){
+  let h="",lm=-1;
+  FILMS.forEach((f,i)=>{
+    const d=dateOf(i);
+    if(d.getMonth()!==lm){lm=d.getMonth();h+=`<div class="m">${MN[lm]}</div>`}
+    const L=locked(i);
+    h+=`<div class="row${i===cur?" today":""}${watched[i]?" done":""}" data-i="${i}" style="cursor:${L?"default":"pointer"}${L?";opacity:.55":""}"><span class="d">${d.getDate()} ${MN[lm].slice(0,3)}.</span><span class="t">${L?"🔒 Կբացվի "+fmt(d)+"-ին, նախորդը դիտելուց հետո":f}</span><span>${watched[i]?"✓":""}</span></div>`;
+  });
+  const c=document.getElementById("cal");c.innerHTML=h;
+  c.querySelectorAll(".row").forEach(r=>r.onclick=()=>{if(locked(+r.dataset.i))return;cur=+r.dataset.i;all();scrollTo({top:0,behavior:"smooth"})});
+}
+
+const ING={"3in1":"☕ Սուրճ 3-ը 1-ում",coffee:"Աղացած սուրճ",milk:"🥛 Կաթ",sugar:"Շաքար",cinnamon:"Դարչին",cocoa:"Կակաո",chocolate:"🍫 Շոկոլադ",honey:"🍯 Մեղր",ice:"🧊 Սառույց",vanilla:"Վանիլ",cream:"Սերուցք",condensed:"Խտացրած կաթ",orange:"🍊 Նարինջ",cardamom:"Հիլ",nutmeg:"Մշկընկույզ",ginger:"Կոճապղպեղ"};
+const R=[
+{n:"3-ը 1-ում դասական",i:["3in1"],o:["milk","cinnamon"],t:"Պարկուճը լցրու գավաթի մեջ, վրան լցրու 150–180 մլ տաք (ոչ թե եռացող) ջուր և լավ խառնիր։ Ջրի փոխարեն կաթ դնելով ավելի փափուկ է։",m:"Արագ և հարմար"},
+{n:"3-ը 1-ում կաթով",i:["3in1","milk"],o:["cinnamon","vanilla"],t:"Տաքացրու կաթը (չեռացնել), լցրու պարկուճի վրա և խառնիր։ Փրփրեցրու պատառաքաղով, որ լատտեի նման լինի։",m:"Կրեմային, ֆիլմի համար"},
+{n:"3-ը 1-ում դարչնով",i:["3in1","cinnamon"],o:["milk","honey"],t:"Պատրաստիր սուրճը և վրան ցանիր դարչին։ Կարող ես մի թ/գ մեղր ավելացնել։",m:"Աշնանային, Հարրի Փոթերի երեկոյի"},
+{n:"3-ը 1-ում կակաոյով (մոկկա)",i:["3in1","cocoa","milk"],o:["cream"],t:"Տաք կաթի մեջ լուծիր 1 թ/գ կակաո, լցրու 3-ը 1-ի վրա, վրան՝ սերուցք։",m:"Շոկոլադե, ամանորյա"},
+{n:"Շոկոլադով 3-ը 1-ում",i:["3in1","chocolate"],o:["milk","cream"],t:"Տաք կաթի կամ ջրի մեջ հալեցրու 2–3 կտոր շոկոլադ, ավելացրու 3-ը 1-ը և խառնիր։",m:"«Մենակ տանը»-ի երեկոյի համար"},
+{n:"Վանիլային 3-ը 1-ում",i:["3in1","vanilla"],o:["milk"],t:"Պատրաստիր սուրճը և ավելացրու մի քանի կաթիլ վանիլ։",m:"Փափուկ ու քաղցր"},
+{n:"3-ը 1-ում սերուցքով",i:["3in1","cream"],o:["cocoa","cinnamon"],t:"Պատրաստիր սուրճը և վրան դիր մի գդալ սերուցք կամ հարած սերուցք։",m:"Կաֆեի նման"},
+{n:"Սառը 3-ը 1-ում",i:["3in1","ice"],o:["milk","vanilla"],t:"Սուրճը լուծիր մի քիչ տաք ջրում, լցրու սառույցի վրա և ավելացրու սառը կաթ։",m:"Երբ տաք է"},
+{n:"Համեմունքներով 3-ը 1-ում",i:["3in1","cinnamon","ginger"],o:["nutmeg","honey","milk"],t:"Կաթի մեջ ավելացրու մի պտղունց դարչին և կոճապղպեղ, տաքացրու և լցրու 3-ը 1-ի վրա։",m:"«Չորեքշաբթի»-ի մռայլ երեկոների համար"},
+{n:"Հայկական սուրճ (ջեզվեում)",i:["coffee"],o:["sugar"],t:"Ջեզվեի մեջ լցրու 1 թեյի գդալ աղացած սուրճ, 1 սուրճի գավաթ սառը ջուր (և ըստ ճաշակի շաքար)։ Տար դանդաղ կրակի վրա՝ առանց խառնելու, մինչև փրփուրը բարձրանա։ Հանիր կրակից, թող նստի 1 րոպե։",m:"Դասական, Հարրի Փոթերի երեկոների համար"},
+{n:"Դարչինով սուրճ",i:["coffee","cinnamon"],o:["sugar"],t:"Պատրաստիր սուրճը և ավելացրու մի պտղունց դարչին՝ սուրճի հետ եռացնելիս կամ վրայից ցանելով։",m:"Աշնանային, տաք ու հարմար"},
+{n:"Մեղրով դարչնի սուրճ",i:["coffee","honey","cinnamon"],o:["milk"],t:"Տաք սուրճի մեջ լուծիր 1 թեյի գդալ մեղր և պտղունց դարչին։ Ցանկության դեպքում ավելացրու կաթ։",m:"«Չորեքշաբթի»-ի մռայլ երեկոներին"},
+{n:"Լատտե",i:["coffee","milk"],o:["sugar","vanilla"],t:"Տաքացրու կաթը (չեռացնել), փրփրեցրու պատառաքաղով կամ թեյի ավելով։ Լցրու ուժեղ սուրճի վրա։",m:"Հանգիստ կինոերեկո"},
+{n:"Մոկկա (շոկոլադե սուրճ)",i:["coffee","milk","cocoa"],o:["sugar","cream"],t:"Կաթին խառնիր 1–2 թ/գ կակաո և շաքար, տաքացրու։ Լցրու սուրճի վրա, վրան՝ սերուցք։",m:"Ամանորյա ֆիլմերի համար"},
+{n:"Տաք շոկոլադով սուրճ",i:["coffee","chocolate","milk"],o:["cream"],t:"Կաթի մեջ հալեցրու 2–3 կտոր շոկոլադ, խառնիր և լցրու սուրճի վրա։",m:"«Մենակ տանը»-ի երեկոյի համար"},
+{n:"Վանիլային սուրճ",i:["coffee","milk","vanilla"],o:["sugar"],t:"Տաք կաթին ավելացրու վանիլ, լցրու սուրճի վրա։",m:"Փափուկ ու քաղցր"},
+{n:"Սուրճ խտացրած կաթով",i:["coffee","condensed"],o:["ice"],t:"1–2 թ/գ խտացրած կաթ խառնիր ուժեղ սուրճի մեջ։ Կարելի է ձմեռը սառույցով։",m:"Շատ քաղցր և հագեցած"},
+{n:"Սառը սուրճ",i:["coffee","ice","milk"],o:["sugar","vanilla"],t:"Պատրաստիր ուժեղ սուրճ, հովացրու, լցրու սառույցի վրա և ավելացրու կաթ։",m:"Երբ տանը տաք է"},
+{n:"Հիլով սուրճ",i:["coffee","cardamom"],o:["sugar"],t:"Սուրճի հետ ջեզվեում դիր 1–2 մանրացրած հիլի հատիկ։",m:"Բուրավետ, արևելյան"},
+{n:"Նարնջային սուրճ",i:["coffee","orange"],o:["honey","cinnamon"],t:"Պատրաստի սուրճին ավելացրու նարնջի կեղևի մի քանի շերտ և քիչ հյութ։ Մեղրը հավասարակշռում է դառնությունը։",m:"Ամանորյա, մանդարինային տրամադրություն"},
+{n:"Աշնանային համեմունքներով սուրճ",i:["coffee","milk","cinnamon","nutmeg","ginger"],o:["honey","cream"],t:"Տաք կաթին խառնիր դարչին, մշկընկույզ և կոճապղպեղ՝ մի պտղունց։ Լցրու սուրճի վրա։",m:"Ձմեռային, «Չորեքշաբթի»-ի շրջանի համար"},
+{n:"Դալգոնա (խփած սուրճ)",i:["coffee","sugar","milk"],o:["ice"],t:"Ըստ 1:1:1՝ լուծվող սուրճ, շաքար, տաք ջուր, խփիր մինչև թանձր փրփուր։ Դիր կաթի վրա։",m:"Գեղեցիկ և զվարճալի"}
+];
+const have=new Set(["3in1"]);
+function renderIngs(){
+  const c=document.getElementById("ings");c.innerHTML="";
+  for(const k in ING){const b=document.createElement("button");b.className="chip"+(have.has(k)?" on":"");b.textContent=ING[k];
+    b.onclick=()=>{have.has(k)?have.delete(k):have.add(k);renderIngs()};c.appendChild(b)}
+  const ok=[],near=[];
+  R.forEach(r=>{const ms=r.i.filter(x=>!have.has(x));if(!ms.length)ok.push(r);else if(ms.length===1)near.push([r,ms[0]])});
+  let h="";
+  const card=(r,mis)=>{
+    const opt=r.o.filter(x=>have.has(x)).map(x=>ING[x]).join(", ");
+    return `<div class="card rec"><h3>${r.n}</h3><p>${r.t}</p><p class="miss">Տրամադրություն՝ ${r.m}${opt?" · Կարող ես ավելացնել՝ "+opt:""}${mis?" · Պակասում է՝ "+ING[mis]:""}</p></div>`};
+  h+=ok.length?ok.map(r=>card(r)).join(""):`<div class="card">Նշիր սուրճի տեսակը 👆</div>`;
+  if(near.length)h+=`<div class="m">Գրեթե կարող ես (պակասում է 1 բան)</div>`+near.map(x=>card(x[0],x[1])).join("");
+  document.getElementById("recs").innerHTML=h;
+}
+let rot=0,spinning=false;
+function drawWheel(c){const x=wh.getContext("2d"),n=c.length,r=150,cols=["#b4562a","#7a3b1d","#d98a4a","#5b3a29","#c4663a","#8a4a2a","#e0a060","#6b4430"];
+x.clearRect(0,0,300,300);
+c.forEach((idx,k)=>{const a0=-Math.PI/2+k*2*Math.PI/n,a1=a0+2*Math.PI/n;
+x.beginPath();x.moveTo(r,r);x.arc(r,r,r-2,a0,a1);x.fillStyle=cols[k%8];x.fill();
+x.save();x.translate(r,r);x.rotate((a0+a1)/2);x.fillStyle="#fff";x.font="12px sans-serif";x.textAlign="right";
+let t=FILMS[idx].replace(/ \(\d+\)$/,"");if(t.length>20)t=t.slice(0,19)+"…";x.fillText(t,r-14,4);x.restore()})}
+sp.onclick=()=>{
+  if(spinning)return;
+  if(cur<7){wm.textContent="Հարրի Փոթերի մասերը գնում են հերթականությամբ 🧙";return}
+  if(FILMS[cur].includes("⭐")){wm.textContent="«Չորեքշաբթի»-ի օրերը ֆիքսված են ⭐";return}
+  const pool=FILMS.map((f,i)=>i).filter(i=>i>=7&&!watched[i]&&i!==cur&&!FILMS[i].includes("⭐")).sort(()=>Math.random()-.5);
+  if(pool.length<2){wm.textContent="Չդիտված ֆիլմեր չմնացին 🙂";return}
+  const c=pool.slice(0,8),n=c.length,k=Math.floor(Math.random()*n);
+  drawWheel(c);spinning=true;wm.textContent="Պտտվում է…";
+  const target=360-(k+.5)*360/n;
+  rot+=360*5+(((target-rot)%360)+360)%360;
+  wh.style.transform="rotate("+rot+"deg)";
+  setTimeout(()=>{const a=cur,b=c[k];[FILMS[a],FILMS[b]]=[FILMS[b],FILMS[a]];swaps.push([a,b]);
+    try{localStorage.setItem("s2",JSON.stringify(swaps))}catch(e){}
+    spinning=false;all();wm.textContent="🎉 Ընտրվեց՝ "+FILMS[a]},4400);
+};
+function all(){renderToday();renderCal()}
+all();renderIngs();drawWheel(FILMS.map((f,i)=>i).filter(i=>!FILMS[i].includes("⭐")).slice(cur,cur+8));
+</script>
+</body>
+</html>
